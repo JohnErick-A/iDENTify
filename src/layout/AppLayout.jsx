@@ -1,5 +1,5 @@
 // src/layout/AppLayout.jsx
-import React from "react";
+import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./../App.css";
 
@@ -12,18 +12,28 @@ import LogoutIcon from "../assets/logout.svg";
 
 function AppLayout({ setIsLoggedIn }) {
   const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     navigate("/");
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   return (
     <div className="layout">
 
-      {/* ORIGINAL NAME KEPT */}
-      <aside className="sidebar-full">
-        <h1 className="sidebar-title">iDENTify</h1>
+      {/* SIDEBAR WITH TOGGLE */}
+      <aside className={`sidebar-full ${isSidebarCollapsed ? "collapsed" : ""}`}>
+        <div className="sidebar-header">
+          <button className="sidebar-toggle" onClick={toggleSidebar} title="Toggle sidebar">
+            ☰
+          </button>
+          <h1 className="sidebar-title">iDENTify</h1>
+        </div>
 
         <NavLink to="/app" end className="side-icon-btn">
           <img src={DashboardIcon} className="side-icon" />

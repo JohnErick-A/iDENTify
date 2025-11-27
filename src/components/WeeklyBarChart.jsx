@@ -20,25 +20,80 @@ function WeeklyBarChart() {
       {
         label: "Check-ups",
         data: [5, 8, 3, 7, 6, 2, 4],
-        backgroundColor: "rgba(17, 120, 219, 0.7)",
+        backgroundColor: "rgba(95, 142, 167, 0.85)",
+        borderColor: "rgba(95, 142, 167, 1)",
+        borderWidth: 0,
+        borderRadius: 8,
+        borderSkipped: false,
       },
       {
         label: "Appointments",
         data: [3, 4, 2, 5, 4, 1, 2],
-        backgroundColor: "rgba(95, 142, 167, 0.7)",
+        backgroundColor: "rgba(26, 58, 82, 0.7)",
+        borderColor: "rgba(26, 58, 82, 0.9)",
+        borderWidth: 0,
+        borderRadius: 8,
+        borderSkipped: false,
       },
     ],
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
-      legend: { position: "top" },
+      legend: {
+        position: "top",
+        labels: {
+          font: {
+            size: 13,
+            weight: "600",
+            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          },
+          color: "#415165",
+          padding: 15,
+          usePointStyle: true,
+          pointStyle: "circle",
+          boxHeight: 8,
+        },
+      },
+      tooltip: {
+        backgroundColor: "rgba(26, 58, 82, 0.9)",
+        titleFont: { size: 13, weight: "600" },
+        bodyFont: { size: 12 },
+        padding: 12,
+        borderRadius: 8,
+        borderColor: "rgba(95, 142, 167, 0.3)",
+        borderWidth: 1,
+        displayColors: true,
+        boxPadding: 8,
+      },
     },
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { stepSize: 1 },
+        ticks: {
+          stepSize: 2,
+          font: { size: 12, weight: "500" },
+          color: "#7a8595",
+          padding: 8,
+        },
+        grid: {
+          color: "rgba(95, 142, 167, 0.05)",
+          drawBorder: false,
+          lineWidth: 1,
+        },
+      },
+      x: {
+        ticks: {
+          font: { size: 12, weight: "600" },
+          color: "#415165",
+          padding: 8,
+        },
+        grid: {
+          display: false,
+          drawBorder: false,
+        },
       },
     },
   };
