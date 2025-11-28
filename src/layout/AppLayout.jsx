@@ -1,7 +1,6 @@
-// src/layout/AppLayout.jsx
 import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import "./../App.css";
+import "../styles/layout/AppLayout.css";
 
 import DashboardIcon from "../assets/dashboard.svg";
 import AppointmentIcon from "../assets/appointment.svg";
@@ -25,52 +24,77 @@ function AppLayout({ setIsLoggedIn }) {
 
   return (
     <div className="layout">
-
-      {/* SIDEBAR WITH TOGGLE */}
-      <aside className={`sidebar-full ${isSidebarCollapsed ? "collapsed" : ""}`}>
+      <aside className={`sidebar ${isSidebarCollapsed ? "collapsed" : ""}`}>
         <div className="sidebar-header">
-          <button className="sidebar-toggle" onClick={toggleSidebar} title="Toggle sidebar">
-            ☰
-          </button>
-          <h1 className="sidebar-title">iDENTify</h1>
+          <span className="sidebar-title">iDENTify</span>
         </div>
-
-        <NavLink to="/app" end className="side-icon-btn">
-          <img src={DashboardIcon} className="side-icon" />
-          <span>Dashboard</span>
-        </NavLink>
-
-        <NavLink to="/app/appointments" className="side-icon-btn">
-          <img src={AppointmentIcon} className="side-icon" />
-          <span>Appointments</span>
-        </NavLink>
-
-        <NavLink to="/app/queue" className="side-icon-btn">
-          <img src={QueueIcon} className="side-icon" />
-          <span>Queue</span>
-        </NavLink>
-
-        <NavLink to="/app/reports" className="side-icon-btn">
-          <img src={ReportIcon} className="side-icon" />
-          <span>Reports</span>
-        </NavLink>
-
-        <NavLink to="/app/dentists" className="side-icon-btn">
-          <img src={DentistIcon} className="side-icon" />
-          <span>Dentists</span>
-        </NavLink>
-
-        <button className="side-icon-btn logout-row" onClick={handleLogout}>
-          <img src={LogoutIcon} className="side-icon" />
+        <button className="toggle-btn" onClick={toggleSidebar}>
+          {isSidebarCollapsed ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          )}
+        </button>
+        <nav>
+          <NavLink to="/app" end>
+            <img src={DashboardIcon} alt="Dashboard" />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink to="/app/appointments">
+            <img src={AppointmentIcon} alt="Appointments" />
+            <span>Appointments</span>
+          </NavLink>
+          <NavLink to="/app/queue">
+            <img src={QueueIcon} alt="Queue" />
+            <span>Queue</span>
+          </NavLink>
+          <NavLink to="/app/reports">
+            <img src={ReportIcon} alt="Reports" />
+            <span>Reports</span>
+          </NavLink>
+          <NavLink to="/app/dentists">
+            <img src={DentistIcon} alt="Dentists" />
+            <span>Dentists</span>
+          </NavLink>
+        </nav>
+        <button onClick={handleLogout} className="logout-btn">
+          <img src={LogoutIcon} alt="Logout" />
           <span>Logout</span>
         </button>
       </aside>
-
-      <main className="dashboard-area">
+      <main className="content">
         <Outlet />
       </main>
     </div>
   );
 }
+
 
 export default AppLayout;

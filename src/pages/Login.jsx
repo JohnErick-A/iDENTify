@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toothLogo from "../assets/toothlogo.svg";
-import "./../App.css";
+import "../styles/pages/Login.css";
 
 function Login({ setIsLoggedIn }) {
   const [email, setEmail] = useState("");
@@ -28,55 +28,42 @@ function Login({ setIsLoggedIn }) {
           </div>
           <h1 className="login-visual__title">Welcome to iDENTify</h1>
         </div>
-        <p className="login-visual__subtitle">
-          Streamlined records, clinical clarity, and a smoother experience for
-          every patient visit.
-        </p>
+        <p className="login-visual__subtitle">Access your dashboard</p>
       </div>
 
-      <div className="login-panel">
-        <div className="login-card">
-          <div className="login-card__header">
-            <div>
-              <p className="eyebrow">Access your workspace</p>
-              <h2>Sign in to continue</h2>
-            </div>
-
-          </div>
-
-          <form onSubmit={handleLogin} className="signin-form">
-            <label>Email or Username</label>
+      <div className="login-form-container">
+        <form className="login-form" onSubmit={handleLogin}>
+          <h2 className="login-form__title">Log in to your account</h2>
+          <p className="login-form__subtitle">
+            Please enter your email and password
+          </p>
+          <div className="login-form__group">
+            <label htmlFor="email">Email</label>
             <input
-              type="text"
-              placeholder="doctor@practice.com"
+              type="email"
+              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@email.com"
             />
-
-            <label>Password</label>
+          </div>
+          <div className="login-form__group">
+            <label htmlFor="password">Password</label>
             <input
               type="password"
-              placeholder="Enter your password"
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
             />
-
-            <div className="signin-actions">
-              <label className="remember-me">
-                <input type="checkbox" /> Keep me signed in
-              </label>
-              <button type="button" className="text-link">
-                Forgot password?
-              </button>
-            </div>
-
-            <button type="submit" className="signin-btn">
-              Continue
-            </button>
-          </form>
-
-
-        </div>
+          </div>
+          <a href="#" className="login-form__forgot">
+            Forgot password?
+          </a>
+          <button type="submit" className="login-form__button">
+            Login
+          </button>
+        </form>
       </div>
     </div>
   );

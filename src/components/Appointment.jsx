@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from "react";
 import "./Appointment.css";
 
@@ -18,15 +19,25 @@ export default function Appointment({ appointment = {}, onUpdate, onStatusChange
   const [form, setForm] = useState({ time: local.time, name: local.name, desc: local.desc });
 
   useEffect(() => {
-    setLocal({
+    const nextLocal = {
       id: appointment.id,
       time: appointment.time || "",
       name: appointment.name || "",
       desc: appointment.desc || "",
       status: appointment.status || "scheduled",
-    });
-    setForm({ time: appointment.time || "", name: appointment.name || "", desc: appointment.desc || "" });
-  }, [appointment]);
+    };
+
+    if (
+      nextLocal.id !== local.id ||
+      nextLocal.time !== local.time ||
+      nextLocal.name !== local.name ||
+      nextLocal.desc !== local.desc ||
+      nextLocal.status !== local.status
+    ) {
+      setLocal(nextLocal);
+      setForm({ time: nextLocal.time, name: nextLocal.name, desc: nextLocal.desc });
+    }
+  }, [appointment, local]);
 
   function startEdit() {
     setForm({ time: local.time || "", name: local.name || "", desc: local.desc || "" });
@@ -54,64 +65,37 @@ export default function Appointment({ appointment = {}, onUpdate, onStatusChange
   }
 
   return (
-    <div className="dash-appointment-item">
-      <div className="dash-time">{local.time || "-"}</div>
-
-      <div className="dash-info">
-        {isEditing ? (
-          <div className="appointment-edit">
-            <input
-              className="appointment-input"
-              value={form.time}
-              onChange={(e) => setForm((s) => ({ ...s, time: e.target.value }))}
-              placeholder="Time"
-            />
-            <input
-              className="appointment-input"
-              value={form.name}
-              onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-              placeholder="Patient name"
-            />
-            <input
-              className="appointment-input"
-              value={form.desc}
-              onChange={(e) => setForm((s) => ({ ...s, desc: e.target.value }))}
-              placeholder="Description"
-            />
-            <div className="appointment-edit-actions">
-              <button className="small-btn" onClick={saveEdit}>Save</button>
-              <button className="small-btn muted" onClick={cancelEdit}>Cancel</button>
-            </div>
+    <div className={`appointment-card ${local.status}`}>
+      {isEditing ? (
+        <div className="appointment-form">
+          <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+          <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <textarea value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} />
+          <div className="form-actions">
+            <button onClick={saveEdit}>Save</button>
+            <button onClick={cancelEdit}>Cancel</button>
           </div>
-        ) : (
-          <>
-            <strong>{local.name || "(empty)"}</strong>
-            <p className="dash-desc">{local.desc || "-"}</p>
-          </>
-        )}
-      </div>
-
-      <div className="appointment-actions">
-        <span className={`status-badge status-${local.status}`}>{local.status}</span>
-
-        {showDefaultActions && !isEditing && (
-          <>
-            <button className="small-btn" onClick={startEdit} title="Edit appointment">Edit</button>
-
-            {local.status !== "processing" && (
-              <button className="small-btn" onClick={() => changeStatus("processing")}>Processing</button>
+        </div>
+      ) : (
+        <div className="appointment-details">
+          <div className="appointment-info">
+            <span className="time">{local.time}</span>
+            <span className="name">{local.name}</span>
+            <span className="desc">{local.desc}</span>
+            <span className="status">{local.status}</span>
+          </div>
+          <div className="appointment-actions">
+            {showDefaultActions && (
+              <>
+                <button onClick={() => changeStatus("noshow")}>No Show</button>
+                <button onClick={() => changeStatus("completed")}>Complete</button>
+                <button onClick={startEdit}>Edit</button>
+              </>
             )}
-
-            {local.status !== "completed" ? (
-              <button className="small-btn primary" onClick={() => changeStatus("completed")}>Complete</button>
-            ) : (
-              <button className="small-btn muted" onClick={() => changeStatus("scheduled")}>Undo</button>
-            )}
-          </>
-        )}
-
-        {extraAction ? <div className="appointment-extra">{extraAction}</div> : null}
-      </div>
+            {extraAction && <button onClick={() => extraAction(local)}>{extraAction.label}</button>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

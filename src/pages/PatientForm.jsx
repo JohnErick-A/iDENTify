@@ -1,12 +1,13 @@
-// src/pages/PatientForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "./../App.css";
+import "../styles/pages/PatientForm.css";
+import PatientHistorySidebar from "../components/PatientHistorySidebar";
+import XrayViewer from "../components/XrayViewer";
+import MedicalAlertBanner from "../components/MedicalAlertBanner";
 
 function PatientForm() {
   const navigate = useNavigate();
   const { id } = useParams(); // ready for dynamic data later
-
 
   const [boxMarks, setBoxMarks] = useState(Array(64).fill(""));
 
@@ -17,9 +18,75 @@ function PatientForm() {
     kind: null, // "box"
     index: null,
     boxKind: null, // "treatment" | "condition"
+    cellKey: null,
   });
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [activeStatus, setActiveStatus] = useState("planned");
+  const [toothStatuses, setToothStatuses] = useState({});
+  const [contextMenu, setContextMenu] = useState(null);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  const [selectedXray, setSelectedXray] = useState(null);
+  const [isXrayViewerOpen, setIsXrayViewerOpen] = useState(false);
+
+  const [timelineEntries, setTimelineEntries] = useState([
+    {
+      id: 1,
+      start: "09:05",
+      end: "09:20",
+      provider: "Dr. Paul Zaragoza",
+      procedure: "Cleaning",
+    },
+    {
+      id: 2,
+      start: "09:25",
+      end: "09:45",
+      provider: "Dr. Erica Aquino",
+      procedure: "X-ray & diagnosis",
+    },
+  ]);
+
+  const [editingTimelineIndex, setEditingTimelineIndex] = useState(null);
+
+  const [timelineForm, setTimelineForm] = useState({
+    start: "",
+    end: "",
+    provider: "",
+    procedure: "",
+    notes: "",
+    image: null,
+  });
+
+  const [medications, setMedications] = useState([
+    { medicine: "Ibuprofen", dosage: "400mg", frequency: "q8h", notes: "After meals" },
+  ]);
+
+  const [editingMedicationIndex, setEditingMedicationIndex] = useState(null);
+
+  const [medicationForm, setMedicationForm] = useState({
+    medicine: "",
+    dosage: "",
+    frequency: "",
+    notes: "",
+  });
+
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  useEffect(() => {
+    const storedStatuses = JSON.parse(localStorage.getItem("dentistStatus") || "{}");
+    const patientId = String(id);
+    const dentistStatus = Object.values(storedStatuses).find((status) =>
+      String(status.patientId) === patientId
+    );
+
+    if (dentistStatus && timelineEntries.length > 0) {
+      const updatedTimelineEntries = [...timelineEntries];
+      if (dentistStatus?.startedAt) {
+        updatedTimelineEntries[0].start = new Date(dentistStatus.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setTimelineEntries(updatedTimelineEntries);
+      }
+    }
+  }, [id]);
 
   // vital signs
   const [vitals, setVitals] = useState({
@@ -30,6 +97,134 @@ function PatientForm() {
 
   const updateVitals = (field, value) => {
     setVitals((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const setCellStatus = (cellKey) => {
+    if (!cellKey) return;
+    setToothStatuses((prev) => ({ ...prev, [cellKey]: activeStatus }));
+  };
+
+  const updateTimelineForm = (field, value) => {
+    setTimelineForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+    const addTimelineEntry = () => {
+
+      if (!timelineForm.procedure) return;
+
+  
+
+      const newEntry = { ...timelineForm };
+
+      if (!newEntry.start) {
+
+        newEntry.start = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      }
+
+  
+
+      if (editingTimelineIndex !== null) {
+
+        setTimelineEntries((prev) =>
+
+          prev.map((entry, idx) =>
+
+            idx === editingTimelineIndex ? { ...newEntry, id: entry.id } : entry
+
+          )
+
+        );
+
+        setEditingTimelineIndex(null);
+
+      } else {
+
+        setTimelineEntries((prev) => [
+
+          ...prev,
+
+          { ...newEntry, id: prev.length > 0 ? Math.max(...prev.map(e => e.id)) + 1 : 1 },
+
+        ]);
+
+      }
+
+      setTimelineForm({ start: "", end: "", provider: "", procedure: "", notes: "", image: null });
+
+    };
+
+  const editTimelineEntry = (index) => {
+    const entryToEdit = timelineEntries[index];
+    setTimelineForm(entryToEdit);
+    setEditingTimelineIndex(index);
+  };
+
+  const deleteTimelineEntry = (index) => {
+    setTimelineEntries((prev) => prev.filter((_, idx) => idx !== index));
+    if (editingTimelineIndex === index) {
+      setTimelineForm({ start: "", end: "", provider: "", procedure: "", notes: "", image: null });
+      setEditingTimelineIndex(null);
+    }
+  };
+
+  const updateMedicationForm = (field, value) => {
+    setMedicationForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const addMedication = () => {
+    if (!medicationForm.medicine) return;
+
+    if (editingMedicationIndex !== null) {
+      setMedications((prev) =>
+        prev.map((entry, idx) =>
+          idx === editingMedicationIndex ? { ...medicationForm } : entry
+        )
+      );
+      setEditingMedicationIndex(null);
+    } else {
+      setMedications((prev) => [...prev, medicationForm]);
+    }
+    setMedicationForm({ medicine: "", dosage: "", frequency: "", notes: "" });
+  };
+
+  const editMedication = (index) => {
+    const entryToEdit = medications[index];
+    setMedicationForm(entryToEdit);
+    setEditingMedicationIndex(index);
+  };
+
+  const deleteMedication = (index) => {
+    setMedications((prev) => prev.filter((_, idx) => idx !== index));
+    if (editingMedicationIndex === index) {
+      setMedicationForm({ medicine: "", dosage: "", frequency: "", notes: "" });
+      setEditingMedicationIndex(null);
+    }
+  };
+
+  const exportPrescriptions = () => {
+    const printWindow = window.open("", "PRINT", "height=600,width=800");
+    const listItems = medications
+      .map(
+        (m) =>
+          `<li><strong>${m.medicine}</strong> — ${m.dosage} — ${m.frequency}<br/><em>${m.notes}</em></li>`,
+      )
+      .join("");
+    printWindow.document.write(
+      `<html><head><title>Prescriptions</title></head><body><h2>Prescriptions</h2><ol>${listItems}</ol></body></html>`,
+    );
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  const handleUpload = (event) => {
+    const files = Array.from(event.target.files || []);
+    const mapped = files.map((file) => ({
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }));
+    setUploadedFiles((prev) => [...prev, ...mapped]);
   };
 
   // ---------------- OPTIONS ----------------
@@ -58,47 +253,15 @@ function PatientForm() {
 
   // Tooth numbers for the circles
   const upperConditionRows = [
-    ["55", "54", "53", "52", "51", "61", "62", "63", "64", "65"], // 10
-    [
-      "18",
-      "17",
-      "16",
-      "15",
-      "14",
-      "13",
-      "12",
-      "11",
-      "21",
-      "22",
-      "23",
-      "24",
-      "25",
-      "26",
-      "27",
-      "28",
-    ], // 16
-  ];
+    ["55", "54", "53", "52", "51", "61", "62", "63", "64", "65"],
+    ["18", "17", "16", "15", "14", "13", "12", "11","21", "22", "23", "24", "25", "26", "27", "28"],
+  ]; // 26 total
+
+  // Tooth numbers for the circles
   const lowerConditionRows = [
-    [
-      "48",
-      "47",
-      "46",
-      "45",
-      "44",
-      "43",
-      "42",
-      "41",
-      "31",
-      "32",
-      "33",
-      "34",
-      "35",
-      "36",
-      "37",
-      "38",
-    ], // 16
-    ["85", "84", "83", "82", "81", "71", "72", "73", "74", "75"], // 10
-  ];
+    ["48", "47", "46", "45", "44", "43", "42", "41","31", "32", "33", "34", "35", "36", "37", "38"],
+    ["85", "84", "83", "82", "81", "71", "72", "73", "74", "75"],
+  ]; // 26 total
 
   // ---------------- HELPERS ----------------
 
@@ -115,14 +278,17 @@ function PatientForm() {
       kind: "box",
       index: idx,
       boxKind,
+      cellKey: `box-${idx}`,
     });
     setIsPanelOpen(true);
   };
 
   const toggleCircleShade = (idx) => {
+    const cellKey = `circle-${idx}`;
     setCircleShades((prev) =>
-      prev.map((v, i) => (i === idx ? !v : v))
+      prev.map((v, i) => (i === idx ? !v : v)),
     );
+    setCellStatus(cellKey);
   };
 
   const closePanel = () => {
@@ -131,14 +297,42 @@ function PatientForm() {
       kind: null,
       index: null,
       boxKind: null,
+      cellKey: null,
     });
+  };
+
+  const handleContextMenu = (e, cellKey, boxKind) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.pageX,
+      y: e.pageY,
+      cellKey,
+      boxKind,
+    });
+    setIsContextMenuOpen(true);
+  };
+
+  const closeContextMenu = () => {
+    setIsContextMenuOpen(false);
+    setContextMenu(null);
+  };
+
+  const openXrayViewer = (file) => {
+    setSelectedXray(file);
+    setIsXrayViewerOpen(true);
+  };
+
+  const closeXrayViewer = () => {
+    setSelectedXray(null);
+    setIsXrayViewerOpen(false);
   };
 
   const applyCode = (code) => {
     if (selected.kind === "box" && selected.index != null) {
       setBoxMarks((prev) =>
-        prev.map((v, i) => (i === selected.index ? code : v))
+        prev.map((v, i) => (i === selected.index ? code : v)),
       );
+      setCellStatus(selected.cellKey);
     }
     closePanel();
   };
@@ -157,6 +351,10 @@ function PatientForm() {
           const mark = boxMarks[idx];
           const isSelected =
             selected.kind === "box" && selected.index === idx;
+          const cellKey = `box-${idx}`;
+          const statusClass = toothStatuses[cellKey]
+            ? ` tc-status-${toothStatuses[cellKey]}`
+            : "";
 
           return (
             <button
@@ -164,9 +362,20 @@ function PatientForm() {
               className={
                 "tc-box-cell" +
                 (mark ? " tc-has-mark" : "") +
-                (isSelected ? " tc-selected" : "")
+                (isSelected ? " tc-selected" : "") +
+                statusClass
               }
               onClick={() => handleBoxClick(idx)}
+              onContextMenu={(e) => handleContextMenu(e, cellKey, getBoxKind(idx))}
+              onDoubleClick={() => {
+                setSelected({
+                  kind: "box",
+                  index: idx,
+                  boxKind: getBoxKind(idx),
+                  cellKey,
+                });
+                applyCode("D");
+              }}
             >
               {mark}
             </button>
@@ -187,14 +396,23 @@ function PatientForm() {
           runningIndex += 1;
 
           const shaded = circleShades[idx];
+          const cellKey = `circle-${idx}`;
+          const statusClass = toothStatuses[cellKey]
+            ? ` tc-status-${toothStatuses[cellKey]}`
+            : "";
 
           return (
             <button
               key={num}
               className={
-                "tc-circle-unit" + (shaded ? " tc-has-mark" : "")
+                "tc-circle-unit" + (shaded ? " tc-has-mark" : "") + statusClass
               }
               onClick={() => toggleCircleShade(idx)}
+              onContextMenu={(e) => handleContextMenu(e, cellKey, "condition")}
+              onDoubleClick={() => {
+                toggleCircleShade(idx);
+                applyCode("D");
+              }}
             >
               <div className="tc-circle">{/* no letters, just shade */}</div>
               <span className="tc-number">{num}</span>
@@ -220,192 +438,365 @@ function PatientForm() {
       : [];
 
   return (
-    <div className="patient-form-page">
-      <div className="patient-form-grid">
-        
-        {/* Patient Details */}
-        <section className="patient-details-card">
-          <h3 className="section-title">Patient Details</h3>
-          <div className="patient-details-box">
-            <p>
-              <strong>Name:</strong> Hernane Benedicto
-            </p>
-            <p>
-              <strong>Age:</strong> 20
-            </p>
-            <p>
-              <strong>Sex:</strong> Male
-            </p>
-            <p>
-              <strong>Birthdate:</strong> mm/dd/yyyy
-            </p>
-            <p>
-              <strong>#Number:</strong> 0000-0000-0000
-            </p>
-            <p>
-              <strong>Address:</strong> -----------
-            </p>
-          </div>
-        </section>
-
-        {/* Dentist + Vital signs */}
-        <section className="dentist-details-card">
-          <div className="dentist-row">
-            <div>
-              <h3 className="section-title">Dentist</h3>
-              <select className="dentist-select">
-                <option>Select a Dentist</option>
-                <option>Dr. Paul Zaragoza</option>
-                <option>Dr. Hernane Chu</option>
-                <option>Dr. Benedicto</option>
-              </select>
-            </div>
-
-            <div className="vital-signs">
-              <h3 className="section-title">Vital Signs</h3>
-
-              <div className="vital-row">
-                <div className="vital-field">
-                  <label>Blood Pressure</label>
-                  <input
-                    className="pill-input-input"
-                    placeholder="120/80"
-                    value={vitals.bp}
-                    onChange={(e) => updateVitals("bp", e.target.value)}
-                  />
-                </div>
-                <div className="vital-field">
-                  <label>Pulse Rate</label>
-                  <input
-                    className="pill-input-input"
-                    placeholder="72 bpm"
-                    value={vitals.pulse}
-                    onChange={(e) =>
-                      updateVitals("pulse", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="vital-row">
-                <div className="vital-field">
-                  <label>Temperature</label>
-                  <input
-                    className="pill-input-input"
-                    placeholder="36.8 °C"
-                    value={vitals.temp}
-                    onChange={(e) =>
-                      updateVitals("temp", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* ORAL HEALTH CONDITION */}
-      <section className="oral-section">
-        <h3 className="section-title">Oral Health Condition</h3>
-
-        <div className="tooth-chart-container">
-          <div className="tooth-inner-panel">
-            {/* TOP LAYER: Row 0 = TREATMENT, Row 1 = CONDITION */}
-            <div className="tc-group">
-              <div className="tc-row-header">
-                Top Layer (Treatment / Condition)
-              </div>
-              {/* Row 0: Treatment */}
-              {renderBoxRow(0)}
-              {/* Row 1: Condition */}
-              {renderBoxRow(1)}
-            </div>
-
-            {/* MIDDLE: Circles (shade only) */}
-            <div className="tc-group">
-              <div className="tc-row-header">Condition (Circles only)</div>
-              {/* upper arch circles, indices 0–25 */}
-              {renderCircleGroup(upperConditionRows, 0)}
-              {/* lower arch circles, indices 26–51 */}
-              {renderCircleGroup(lowerConditionRows, 26)}
-            </div>
-
-            {/* BOTTOM LAYER: Row 2 = CONDITION, Row 3 = TREATMENT */}
-            <div className="tc-group">
-              <div className="tc-row-header">
-                Bottom Layer (Condition / Treatment)
-              </div>
-              {/* Row 2: Condition */}
-              {renderBoxRow(2)}
-              {/* Row 3: Treatment */}
-              {renderBoxRow(3)}
-              <div className="tc-small-hint">
-                Click any box to select a code, or click a circle to shade it.
-              </div>
-            </div>
-          </div>
+    <div className="patient-form-layout">
+      <div className="content-card patient-form-card">
+        <MedicalAlertBanner alerts={["Diabetic", "Hypertensive"]} />
+        <div className="form-header">
+          <h2 className="patients-header">Patient Chart: {id}</h2>
         </div>
-      </section>
 
-      {/* Attachment */}
-      <section className="attachment-section">
-        <h3 className="section-title">Attachment</h3>
-
-        <div className="attachment-box">
-          <div className="attachment-header">Upload image or document</div>
-          <div className="attachment-body">Click to Upload</div>
-        </div>
-      </section>
-
-      {/* Done button */}
-      <div className="done-row">
-        <button className="done-btn" onClick={handleDone}>
-          Done
-        </button>
-      </div>
-
-      {/* SIDE PANEL: Treatment / Condition legend */}
-      <div
-        className={
-          "side-panel-backdrop" + (isPanelOpen ? " side-panel-open" : "")
-        }
-        onClick={closePanel}
-      >
-        <div
-          className="side-panel"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="section-title">{panelTitle}</h3>
-
-          <div className="side-panel-content">
-            {panelOptions.length === 0 ? (
-              <p className="placeholder-text">
-                Click a treatment or condition box to choose a code.
+        {/* VITAL SIGNS */}
+        <div className="sections-container">
+          <section className="patient-info-card">
+            <h3 className="section-title">Patient Info</h3>
+            <div className="patient-info-fields">
+              <p>
+                <strong>Name:</strong> John Erick Dela Cruz
               </p>
-            ) : (
-              <div className="code-grid">
-                {panelOptions.map((opt) => (
-                  <button
-                    key={opt.label}
-                    className="code-option-btn"
-                    onClick={() => applyCode(opt.code)}
-                  >
-                    <span className="code-option-code">
-                      {opt.code || "Clear"}
-                    </span>
-                    <span className="code-option-label">{opt.label}</span>
-                  </button>
-                ))}
+              <p>
+                <strong>Age:</strong> 20
+              </p>
+              <p>
+                <strong>Sex:</strong> Male
+              </p>
+              <p>
+                <strong>Birthdate:</strong> mm/dd/yyyy
+              </p>
+              <p>
+                <strong>#Number:</strong> 0000-0000-0000
+              </p>
+              <p>
+                <strong>Address:</strong> -----------
+              </p>
+            </div>
+          </section>
+
+          {/* Dentist + Vital signs */}
+          <section className="dentist-details-card">
+            <div className="dentist-row">
+              <div>
+                <h3 className="section-title">Dentist</h3>
+                <select className="dentist-select">
+                  <option>Select a Dentist</option>
+                  <option>Dr. Paul Zaragoza</option>
+                  <option>Dr. Erica Aquino</option>
+                  <option>Dr. Hernane Benedicto</option>
+                </select>
               </div>
+
+              <div className="vital-signs">
+                <h3 className="section-title">Vital Signs</h3>
+
+                <div className="vital-row">
+                  <div className="vital-field">
+                    <label>Blood Pressure</label>
+                    <input
+                      className="pill-input-input"
+                      placeholder="120/80"
+                      value={vitals.bp}
+                      onChange={(e) => updateVitals("bp", e.target.value)}
+                    />
+                  </div>
+                  <div className="vital-field">
+                    <label>Pulse Rate</label>
+                    <input
+                      className="pill-input-input"
+                      placeholder="72 bpm"
+                      value={vitals.pulse}
+                      onChange={(e) =>
+                        updateVitals("pulse", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="vital-row">
+                  <div className="vital-field">
+                    <label>Temperature</label>
+                    <input
+                      className="pill-input-input"
+                      placeholder="36.8 °C"
+                      value={vitals.temp}
+                      onChange={(e) =>
+                        updateVitals("temp", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* ORAL HEALTH CONDITION */}
+        <section className="oral-section">
+          <h3 className="section-title">Oral Health Condition</h3>
+
+          <div className="status-palette">
+            {["issue", "planned", "completed"].map((status) => (
+              <button
+                key={status}
+                className={
+                  "status-pill" + (activeStatus === status ? " active" : "")
+                }
+                onClick={() => setActiveStatus(status)}
+              >
+                <span className={`status-dot ${status}`}></span>
+                {status === "issue"
+                  ? "Issue (red)"
+                  : status === "planned"
+                  ? "Planned (blue)"
+                  : "Completed (green)"}
+              </button>
+            ))}
+          </div>
+
+          <div className="tooth-chart-container">
+            <div className="tooth-inner-panel">
+              {/* TOP LAYER: Row 0 = TREATMENT, Row 1 = CONDITION */}
+              <div className="tc-group">
+                <div className="tc-row-header">
+                  Top Layer (Treatment / Condition)
+                </div>
+                {/* Row 0: Treatment */}
+                {renderBoxRow(0)}
+                {/* Row 1: Condition */}
+                {renderBoxRow(1)}
+              </div>
+
+              {/* MIDDLE: Circles (shade only) */}
+              <div className="tc-group">
+                <div className="tc-row-header">Condition (Circles only)</div>
+                {/* upper arch circles, indices 0–25 */}
+                {renderCircleGroup(upperConditionRows, 0)}
+                {/* lower arch circles, indices 26–51 */}
+                {renderCircleGroup(lowerConditionRows, 26)}
+              </div>
+
+              {/* BOTTOM LAYER: Row 2 = CONDITION, Row 3 = TREATMENT */}
+              <div className="tc-group">
+                <div className="tc-row-header">
+                  Bottom Layer (Condition / Treatment)
+                </div>
+                {/* Row 2: Condition */}
+                {renderBoxRow(2)}
+                {/* Row 3: Treatment */}
+                {renderBoxRow(3)}
+                <div className="tc-small-hint">
+                  Click any box to select a code, or click a circle to shade it.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Treatment timeline */}
+        <section className="timeline-section">
+          <h3 className="section-title">Treatment Timeline</h3>
+          <div className="timeline-form">
+            <input
+              className="pill-input-input"
+              placeholder="Start (e.g. 09:00)"
+              value={timelineForm.start}
+              onChange={(e) => updateTimelineForm("start", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="End (e.g. 09:30)"
+              value={timelineForm.end}
+              onChange={(e) => updateTimelineForm("end", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="Updated by"
+              value={timelineForm.provider}
+              onChange={(e) => updateTimelineForm("provider", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="Procedure"
+              value={timelineForm.procedure}
+              onChange={(e) => updateTimelineForm("procedure", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="Notes"
+              value={timelineForm.notes}
+              onChange={(e) => updateTimelineForm("notes", e.target.value)}
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                updateTimelineForm("image", e.target.files[0])
+              }
+            />
+            <button className="small-btn" onClick={addTimelineEntry}>
+              {editingTimelineIndex !== null ? "Save Changes" : "Add Entry"}
+            </button>
+          </div>
+          <div className="timeline-list">
+            {timelineEntries.map((entry, idx) => (
+              <div key={idx} className="timeline-entry">
+                <div className="timeline-meta">
+                  <span>{entry.start} - {entry.end || "..."}</span>
+                  <span>{entry.provider || "Unassigned"}</span>
+                </div>
+                <div>{entry.procedure}</div>
+                <div className="timeline-entry-actions">
+                  <button className="small-btn" onClick={() => editTimelineEntry(idx)}>Edit</button>
+                  <button className="small-btn danger" onClick={() => deleteTimelineEntry(idx)}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Medication and prescriptions */}
+        <section className="medication-section">
+          <h3 className="section-title">Medication & Prescriptions</h3>
+          <div className="medication-form">
+            <input
+              className="pill-input-input"
+              placeholder="Medicine"
+              value={medicationForm.medicine}
+              onChange={(e) => updateMedicationForm("medicine", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="Dosage"
+              value={medicationForm.dosage}
+              onChange={(e) => updateMedicationForm("dosage", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="Frequency"
+              value={medicationForm.frequency}
+              onChange={(e) => updateMedicationForm("frequency", e.target.value)}
+            />
+            <input
+              className="pill-input-input"
+              placeholder="Notes"
+              value={medicationForm.notes}
+              onChange={(e) => updateMedicationForm("notes", e.target.value)}
+            />
+            <div className="medication-actions">
+              <button className="small-btn" onClick={addMedication}>
+                {editingMedicationIndex !== null ? "Save Changes" : "Add Medication"}
+              </button>
+              <button className="small-btn secondary" onClick={exportPrescriptions}>
+                Export as PDF
+              </button>
+            </div>
+          </div>
+          <div className="medication-list">
+            {medications.map((m, idx) => (
+              <div key={idx} className="medication-entry">
+                <strong>{m.medicine}</strong> — {m.dosage || ""} — {m.frequency || ""}
+                <div className="muted-text">{m.notes}</div>
+                <div className="medication-entry-actions">
+                  <button className="small-btn" onClick={() => editMedication(idx)}>Edit</button>
+                  <button className="small-btn danger" onClick={() => deleteMedication(idx)}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Uploads */}
+        <section className="upload-section">
+          <h3 className="section-title">X-rays & Images</h3>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleUpload}
+          />
+          <div className="thumbnail-grid">
+            {uploadedFiles.length === 0 ? (
+              <div className="muted-text">No files uploaded yet.</div>
+            ) : (
+              uploadedFiles.map((file) => (
+                <div key={file.url} className="thumbnail-item">
+                  <button onClick={() => openXrayViewer(file)}>
+                    <img src={file.url} alt={file.name} />
+                  </button>
+                </div>
+              ))
             )}
           </div>
+        </section>
 
-          <button className="side-panel-close-btn" onClick={closePanel}>
-            Close
+        {/* Done button */}
+        <div className="done-row">
+          <button className="done-btn" onClick={handleDone}>
+            Done
           </button>
         </div>
+
+        {/* SIDE PANEL: Treatment / Condition legend */}
+        <div
+          className={
+            "side-panel-backdrop" + (isPanelOpen ? " side-panel-open" : "")
+          }
+          onClick={closePanel}
+        >
+          <div
+            className="side-panel"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="section-title">{panelTitle}</h3>
+
+            <div className="side-panel-content">
+              {panelOptions.length === 0 ? (
+                <p>Select a box to see treatment or condition options.</p>
+              ) : (
+                <div className="options-grid">
+                  {panelOptions.map((option) => (
+                    <button
+                      key={option.code}
+                      className="option-pill"
+                      onClick={() => applyCode(option.code)}
+                    >
+                      <strong>{option.code || "Clear"}</strong>
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+      <PatientHistorySidebar />
+
+      {isContextMenuOpen && contextMenu && (
+        <div
+          className="context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={closeContextMenu}
+        >
+          <div className="options-grid">
+            {(contextMenu.boxKind === "treatment"
+              ? treatmentOptions
+              : conditionOptions
+            ).map((option) => (
+              <button
+                key={option.code}
+                className="option-pill"
+                onClick={() => applyCode(option.code)}
+              >
+                <strong>{option.code || "Clear"}</strong>
+                <span>{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isXrayViewerOpen && (
+        <XrayViewer file={selectedXray} onClose={closeXrayViewer} />
+      )}
     </div>
   );
 }

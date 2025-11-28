@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import "../styles/components/WeeklyBarChart.css";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -40,67 +41,40 @@ function WeeklyBarChart() {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top",
-        labels: {
-          font: {
-            size: 13,
-            weight: "600",
-            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          },
-          color: "#415165",
-          padding: 15,
-          usePointStyle: true,
-          pointStyle: "circle",
-          boxHeight: 8,
-        },
-      },
-      tooltip: {
-        backgroundColor: "rgba(26, 58, 82, 0.9)",
-        titleFont: { size: 13, weight: "600" },
-        bodyFont: { size: 12 },
-        padding: 12,
-        borderRadius: 8,
-        borderColor: "rgba(95, 142, 167, 0.3)",
-        borderWidth: 1,
-        displayColors: true,
-        boxPadding: 8,
+        display: false,
       },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 2,
-          font: { size: 12, weight: "500" },
-          color: "#7a8595",
-          padding: 8,
-        },
-        grid: {
-          color: "rgba(95, 142, 167, 0.05)",
-          drawBorder: false,
-          lineWidth: 1,
-        },
-      },
       x: {
-        ticks: {
-          font: { size: 12, weight: "600" },
-          color: "#415165",
-          padding: 8,
-        },
         grid: {
           display: false,
-          drawBorder: false,
+        },
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 14,
+          },
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 14,
+          },
         },
       },
     },
   };
 
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">Weekly Check-ups & Appointments</h3>
+    <div className="weekly-chart-container">
       <Bar data={data} options={options} />
     </div>
   );
